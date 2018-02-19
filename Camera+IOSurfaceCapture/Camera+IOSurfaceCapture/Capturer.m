@@ -17,19 +17,9 @@ CGImageRef UICreateCGImageFromIOSurface(IOSurfaceRef ioSurface);
 @implementation Capturer
 
 + (CGImageRef)captureFrame:(UIWindow *)window {
-    CVReturn status = kCVReturnSuccess;
-    CVPixelBufferRef pixelBuffer = NULL;
-
     IOSurfaceRef surface = [window createIOSurface];
-
-    NSDictionary *pixelBufferAttributes = @{(NSString *)kCVPixelBufferPixelFormatTypeKey : @(kCVPixelFormatType_32BGRA)};
-    status = CVPixelBufferCreateWithIOSurface(NULL, surface, (__bridge CFDictionaryRef _Nullable)(pixelBufferAttributes), &pixelBuffer);
-    NSParameterAssert(status == kCVReturnSuccess && pixelBuffer);
-
     CGImageRef ref = UICreateCGImageFromIOSurface(surface);
     CFRelease(surface);
-
-    CVPixelBufferRelease(pixelBuffer);
     return ref;
 }
 
