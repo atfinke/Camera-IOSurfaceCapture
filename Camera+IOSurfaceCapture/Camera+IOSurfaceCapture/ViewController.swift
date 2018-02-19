@@ -65,6 +65,7 @@ class ViewController: UIViewController {
     private var previewLayer: AVCaptureVideoPreviewLayer?
 
     private let imageView = UIImageView()
+    private let arImageView = UIImageView()
     private let captureButtonView = CaptureButtonView()
 
     override func viewDidLoad() {
@@ -72,6 +73,11 @@ class ViewController: UIViewController {
 
         imageView.frame = view.frame
         view.addSubview(imageView)
+
+        arImageView.image = #imageLiteral(resourceName: "ARKit-Badge")
+        arImageView.isHidden = true
+        arImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(arImageView)
 
         captureButtonView.buttonPressed = { [weak self] in
             self?.captureButtonPressed()
@@ -82,7 +88,12 @@ class ViewController: UIViewController {
             captureButtonView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0),
             captureButtonView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             captureButtonView.widthAnchor.constraint(equalToConstant: 80.0),
-            captureButtonView.heightAnchor.constraint(equalToConstant: 80.0)
+            captureButtonView.heightAnchor.constraint(equalToConstant: 80.0),
+
+            arImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0),
+            arImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            arImageView.widthAnchor.constraint(equalToConstant: 81.0),
+            arImageView.heightAnchor.constraint(equalToConstant: 42.0)
         ]
         NSLayoutConstraint.activate(constraints)
 
@@ -124,6 +135,11 @@ class ViewController: UIViewController {
         }
         UIImpactFeedbackGenerator().impactOccurred()
         imageCaptured?(image)
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        arImageView.isHidden = captureButtonView.isHidden
+        captureButtonView.isHidden = !captureButtonView.isHidden
     }
 }
 
