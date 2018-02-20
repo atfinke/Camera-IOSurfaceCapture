@@ -64,6 +64,7 @@ class ViewController: UIViewController {
     private var captureSession = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
 
+    private let flipButton = UIButton()
     private let imageView = UIImageView()
     private let captureButtonView = CaptureButtonView()
 
@@ -78,16 +79,26 @@ class ViewController: UIViewController {
         }
         view.addSubview(captureButtonView)
 
+        flipButton.translatesAutoresizingMaskIntoConstraints = false
+        flipButton.setTitle("FLIP", for: .normal)
+        flipButton.titleLabel?.font = UIFont.systemFont(ofSize: 22.0, weight: .semibold)
+        flipButton.addTarget(self, action: #selector(swapCamera), for: .touchUpInside)
+        view.addSubview(flipButton)
+
         let constraints = [
             captureButtonView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 0),
             captureButtonView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             captureButtonView.widthAnchor.constraint(equalToConstant: 80.0),
-            captureButtonView.heightAnchor.constraint(equalToConstant: 80.0)
+            captureButtonView.heightAnchor.constraint(equalToConstant: 80.0),
+
+            flipButton.leftAnchor.constraint(equalTo: captureButtonView.rightAnchor, constant: 0),
+            flipButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0),
+            flipButton.centerYAnchor.constraint(equalTo: captureButtonView.centerYAnchor, constant: 0),
         ]
         NSLayoutConstraint.activate(constraints)
 
         let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInDualCamera],
-                                                                      mediaType: AVMediaType.video,
+                                                                      mediaType: .video,
                                                                       position: .back)
 
         guard let captureDevice = deviceDiscoverySession.devices.first else {
@@ -125,6 +136,32 @@ class ViewController: UIViewController {
         UIImpactFeedbackGenerator().impactOccurred()
         imageCaptured?(image)
     }
+
+    @objc
+    func swapCamera() {
+        guard let currentInput = captureSession.inputs.first as? AVCaptureDeviceInput else { return }
+
+        captureSession.beginConfiguration()
+        defer { captureSession.commitConfiguration() }
+
+        let currentIsFront = currentInput.device.position == .front
+        let newPosition: AVCaptureDevice.Position = currentIsFront ? .back : .front
+
+        let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInDualCamera],
+                                                                      mediaType: .video,
+                                                                      position: newPosition)
+
+        guard let captureDevice = deviceDiscoverySession.devices.first,
+            let deviceInput = try? AVCaptureDeviceInput(device: captureDevice) else {
+            fatalError()
+        }
+
+        captureSession.removeInput(currentInput)
+        captureSession.addInput(deviceInput)
+        captureSession.outputs.first?.connection(with: .video)?.videoOrientation = .portrait
+        captureSession.outputs.first?.connection(with: .video)?.isVideoMirrored = !currentIsFront
+    }
+
 }
 
 extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
